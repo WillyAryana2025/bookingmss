@@ -778,6 +778,7 @@
         };
         let selectedTime = "";
         let dailyQuota = {}; // Will store daily quota information from server
+        let timeSlotQuota = {}; // Will store quota per time slot (morning: max 5, afternoon: max 5)
         let autoRefreshInterval;
 
         // ===================================================
@@ -935,8 +936,44 @@
         }
 
         function enableTimeSlots() {
-          morningSlot.classList.remove("disabled");
-          afternoonSlot.classList.remove("disabled");
+          const visitDate = tanggalKunjunganInput.value;
+          const timeQuota = timeSlotQuota[visitDate] || { morning: 0, afternoon: 0 };
+          
+          // Update morning slot display and enable/disable based on quota (max 5 units)
+          const morningAvailable = 5 - timeQuota.morning;
+          const morningTimeText = morningSlot.querySelector('.text-sm');
+          
+          if (timeQuota.morning >= 5) {
+            morningSlot.classList.add("disabled");
+            morningSlot.classList.remove("selected");
+            morningTimeText.innerHTML = '08:00 - 11:30<br><span class="text-red-500 text-xs font-medium">PENUH (5/5 unit)</span>';
+            if (selectedTime === "morning") {
+              selectedTime = "";
+              selectedTimeInput.value = "";
+              waktuKunjunganInput.value = "";
+            }
+          } else {
+            morningSlot.classList.remove("disabled");
+            morningTimeText.innerHTML = `08:00 - 11:30<br><span class="text-green-600 text-xs font-medium">Tersedia ${morningAvailable}/5 unit</span>`;
+          }
+          
+          // Update afternoon slot display and enable/disable based on quota (max 5 units)
+          const afternoonAvailable = 5 - timeQuota.afternoon;
+          const afternoonTimeText = afternoonSlot.querySelector('.text-sm');
+          
+          if (timeQuota.afternoon >= 5) {
+            afternoonSlot.classList.add("disabled");
+            afternoonSlot.classList.remove("selected");
+            afternoonTimeText.innerHTML = '13:00 - 16:30<br><span class="text-red-500 text-xs font-medium">PENUH (5/5 unit)</span>';
+            if (selectedTime === "afternoon") {
+              selectedTime = "";
+              selectedTimeInput.value = "";
+              waktuKunjunganInput.value = "";
+            }
+          } else {
+            afternoonSlot.classList.remove("disabled");
+            afternoonTimeText.innerHTML = `13:00 - 16:30<br><span class="text-green-600 text-xs font-medium">Tersedia ${afternoonAvailable}/5 unit</span>`;
+          }
         }
 
         function disableTimeSlots() {
@@ -944,6 +981,13 @@
           afternoonSlot.classList.add("disabled");
           morningSlot.classList.remove("selected");
           afternoonSlot.classList.remove("selected");
+          
+          // Reset text to default
+          const morningTimeText = morningSlot.querySelector('.text-sm');
+          const afternoonTimeText = afternoonSlot.querySelector('.text-sm');
+          morningTimeText.innerHTML = '08:00 - 11:30';
+          afternoonTimeText.innerHTML = '13:00 - 16:30';
+          
           selectedTime = "";
           selectedTimeInput.value = "";
           waktuKunjunganInput.value = "";
@@ -985,6 +1029,21 @@
 
           if (!selectedTime) {
             submitButton.textContent = "Pilih Waktu Kunjungan";
+            return;
+          }
+
+          // Check if booking would exceed time slot capacity
+          const timeQuota = timeSlotQuota[visitDate] || { morning: 0, afternoon: 0 };
+          const maxSlotCapacity = selectedTime === "morning" ? 5 : 5; // Pagi max 5, Siang max 5
+          const currentSlotBooked = timeQuota[selectedTime] || 0;
+          
+          if (currentSlotBooked + totalUnits > maxSlotCapacity) {
+            const available = maxSlotCapacity - currentSlotBooked;
+            const slotName = selectedTime === "morning" ? "pagi" : "siang";
+            submitButton.textContent = `Slot ${slotName} hanya tersisa ${available} unit`;
+            showBookingWarning(
+              `Slot ${slotName} ini hanya tersisa ${available} unit. Silakan kurangi jumlah unit atau pilih slot waktu lain.`
+            );
             return;
           }
 
@@ -1033,11 +1092,13 @@
 
             if (data.status === "success") {
               dailyQuota = data.dailyQuota || {}; // Get daily quota from server
+              timeSlotQuota = data.timeSlotQuota || {}; // Get time slot quota from server
               if (showLoading) {
                 bookingIdInput.value = data.nextBookingId;
               }
 
               console.log("Daily quota updated:", dailyQuota); // Debug log
+              console.log("Time slot quota updated:", timeSlotQuota); // Debug log
 
               // Update display immediately if date is already selected
               if (tanggalKunjunganInput.value) {
@@ -1090,32 +1151,40 @@
 
             // Check quota for this date
             const quota = dailyQuota[visitDate];
+            const timeQuota = timeSlotQuota[visitDate] || { morning: 0, afternoon: 0 };
             console.log(`Quota for ${visitDate}:`, quota); // Debug log
+            console.log(`Time slot quota for ${visitDate}:`, timeQuota); // Debug log
 
             if (quota) {
               const available = quota.maxCapacity - quota.totalBooked;
+              const morningAvailable = 5 - timeQuota.morning;
+              const afternoonAvailable = 5 - timeQuota.afternoon;
 
               if (available <= 0) {
-                quotaMessage.innerHTML = `Kuota unit terjadwal pada <strong>${formattedDate}: ${quota.totalBooked} / ${quota.maxCapacity} unit</strong>`;
+                quotaMessage.innerHTML = `Kuota unit terjadwal pada <strong>${formattedDate}: ${quota.totalBooked} / ${quota.maxCapacity} unit</strong><br>
+                  🌅 Pagi: ${timeQuota.morning}/5 unit | ☀️ Siang: ${timeQuota.afternoon}/5 unit`;
                 quotaStatus.innerHTML = "🔴 Jadwal penuh";
                 quotaInfo.className =
                   "info-box quota-full rounded-lg p-4 mb-6 text-center text-sm";
                 disableTimeSlots();
               } else if (available <= 2) {
-                quotaMessage.innerHTML = `Kuota unit terjadwal pada <strong>${formattedDate}: ${quota.totalBooked} / ${quota.maxCapacity} unit</strong>`;
+                quotaMessage.innerHTML = `Kuota unit terjadwal pada <strong>${formattedDate}: ${quota.totalBooked} / ${quota.maxCapacity} unit</strong><br>
+                  🌅 Pagi: ${timeQuota.morning}/5 unit (sisa ${morningAvailable}) | ☀️ Siang: ${timeQuota.afternoon}/5 unit (sisa ${afternoonAvailable})`;
                 quotaStatus.innerHTML = `⚠️ Sisa ${available} slot (hampir penuh)`;
                 quotaInfo.className =
                   "info-box quota-warning rounded-lg p-4 mb-6 text-center text-sm";
                 enableTimeSlots();
               } else {
-                quotaMessage.innerHTML = `Kuota unit terjadwal pada <strong>${formattedDate}: ${quota.totalBooked} / ${quota.maxCapacity} unit</strong>`;
+                quotaMessage.innerHTML = `Kuota unit terjadwal pada <strong>${formattedDate}: ${quota.totalBooked} / ${quota.maxCapacity} unit</strong><br>
+                  🌅 Pagi: ${timeQuota.morning}/5 unit (sisa ${morningAvailable}) | ☀️ Siang: ${timeQuota.afternoon}/5 unit (sisa ${afternoonAvailable})`;
                 quotaStatus.innerHTML = `✅ Tersedia ${available} slot`;
                 quotaInfo.className =
                   "info-box quota-available rounded-lg p-4 mb-6 text-center text-sm";
                 enableTimeSlots();
               }
             } else {
-              quotaMessage.innerHTML = `Slot waktu tersedia pada <strong>${formattedDate}</strong>`;
+              quotaMessage.innerHTML = `Slot waktu tersedia pada <strong>${formattedDate}</strong><br>
+                🌅 Pagi: 0/5 unit (sisa 5) | ☀️ Siang: 0/5 unit (sisa 5)`;
               quotaStatus.innerHTML = "✅ Tersedia 10 slot";
               quotaInfo.className =
                 "info-box quota-available rounded-lg p-4 mb-6 text-center text-sm";
@@ -1232,7 +1301,21 @@
             return;
           }
 
-          // Check quota before submission
+          // Check time slot quota before submission
+          const timeQuota = timeSlotQuota[visitDate] || { morning: 0, afternoon: 0 };
+          const maxSlotCapacity = selectedTime === "morning" ? 5 : 5; // Pagi max 5, Siang max 5
+          const currentSlotBooked = timeQuota[selectedTime] || 0;
+          
+          if (currentSlotBooked + totalUnits > maxSlotCapacity) {
+            const available = maxSlotCapacity - currentSlotBooked;
+            const slotName = selectedTime === "morning" ? "pagi" : "siang";
+            showError(
+              `Maaf, slot ${slotName} ini hanya tersisa ${available} unit. Silakan kurangi jumlah unit atau pilih slot waktu lain.`
+            );
+            return;
+          }
+
+          // Check daily quota before submission
           const quota = dailyQuota[visitDate];
           const currentBooked = quota ? quota.totalBooked : 0;
           if (currentBooked + totalUnits > 10) {
@@ -1295,6 +1378,18 @@
                 serviceDetails.join("\n"),
                 clusterValue
               );
+
+              // Update local time slot quota immediately
+              if (!timeSlotQuota[visitDate]) {
+                timeSlotQuota[visitDate] = { morning: 0, afternoon: 0 };
+              }
+              timeSlotQuota[visitDate][selectedTime] += totalUnits;
+
+              // Update local daily quota immediately  
+              if (!dailyQuota[visitDate]) {
+                dailyQuota[visitDate] = { totalBooked: 0, maxCapacity: 10 };
+              }
+              dailyQuota[visitDate].totalBooked += totalUnits;
 
               // Refresh data after successful booking
               await fetchInitialData(false);
