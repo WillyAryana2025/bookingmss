@@ -1015,6 +1015,17 @@
         // DATA FETCHING FUNCTIONS (ENHANCED)
         // ===================================================
 
+        // Generate fallback booking ID
+        function generateFallbackBookingId() {
+          const now = new Date();
+          const year = now.getFullYear().toString().slice(-2);
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          const time = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+          const random = Math.floor(Math.random() * 999).toString().padStart(3, '0');
+          return `BK${year}${month}${day}${time}${random}`;
+        }
+
         async function fetchInitialData(showLoading = true) {
           if (showLoading) {
             quotaStatus.innerHTML = "Memuat data...";
@@ -1034,7 +1045,13 @@
             if (data.status === "success") {
               dailyQuota = data.dailyQuota || {}; // Get daily quota from server
               if (showLoading) {
-                bookingIdInput.value = data.nextBookingId;
+                // Use server booking ID if available, otherwise generate fallback
+                if (data.nextBookingId && data.nextBookingId !== null && data.nextBookingId !== undefined) {
+                  bookingIdInput.value = data.nextBookingId;
+                } else {
+                  console.warn("Server did not provide nextBookingId, generating fallback");
+                  bookingIdInput.value = generateFallbackBookingId();
+                }
               }
 
               console.log("Daily quota updated:", dailyQuota); // Debug log
@@ -1057,11 +1074,13 @@
             console.error("Gagal mengambil data awal:", error);
             if (showLoading) {
               quotaStatus.innerHTML =
-                '<span class="text-red-500">Gagal memuat data. Mencoba lagi...</span>';
-              bookingIdInput.value = "Error!";
+                '<span class="text-red-500">Gagal memuat data. Menggunakan ID fallback...</span>';
+              // Generate fallback booking ID instead of showing "Error!"
+              bookingIdInput.value = generateFallbackBookingId();
+              console.log("Generated fallback booking ID:", bookingIdInput.value);
 
-              // Retry after 5 seconds
-              setTimeout(() => fetchInitialData(true), 5000);
+              // Still retry after 5 seconds to get server data
+              setTimeout(() => fetchInitialData(false), 5000);
             }
           }
         }
