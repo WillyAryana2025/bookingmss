@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Booking Service AC - CORS Fixed</title>
+    <title>Booking Service AC - Profesional</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -64,6 +64,8 @@
         cursor: not-allowed;
         opacity: 0.8;
       }
+
+      /* Service section styles */
       .service-section {
         border: 2px solid #e5e7eb;
         border-radius: 0.75rem;
@@ -75,6 +77,10 @@
         border-color: #3b82f6;
         background-color: #eff6ff;
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+      }
+      .service-section.disabled {
+        opacity: 0.5;
+        pointer-events: none;
       }
       .service-header {
         display: flex;
@@ -95,6 +101,8 @@
         min-width: 80px;
         text-align: center;
       }
+
+      /* Quantity controls */
       .quantity-controls {
         display: flex;
         align-items: center;
@@ -131,6 +139,8 @@
         text-align: center;
         color: #374151;
       }
+
+      /* Time slot styles */
       .time-option {
         padding: 1rem 1.5rem;
         border: 2px solid #e5e7eb;
@@ -160,6 +170,8 @@
         border-color: #e5e7eb;
         opacity: 0.6;
       }
+
+      /* Custom cluster input */
       .custom-cluster-input {
         margin-top: 0.75rem;
         display: none;
@@ -178,6 +190,8 @@
           transform: translateY(0);
         }
       }
+
+      /* Auto refresh indicator */
       .refresh-indicator {
         position: fixed;
         top: 20px;
@@ -193,44 +207,6 @@
       }
       .refresh-indicator.show {
         opacity: 1;
-      }
-      .error-state {
-        background-color: #fee2e2;
-        border-color: #fca5a5;
-        color: #dc2626;
-      }
-      .retry-btn {
-        background-color: #dc2626;
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        border: none;
-        cursor: pointer;
-        font-size: 0.875rem;
-        margin-top: 0.5rem;
-      }
-      .retry-btn:hover {
-        background-color: #b91c1c;
-      }
-      .cors-info {
-        background-color: #fef3c7;
-        border: 2px solid #f59e0b;
-        color: #92400e;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 1rem;
-        font-size: 0.875rem;
-      }
-      .cors-info h4 {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-      }
-      .cors-info ul {
-        margin-left: 1rem;
-        list-style-type: disc;
-      }
-      .cors-info li {
-        margin-bottom: 0.25rem;
       }
     </style>
   </head>
@@ -254,32 +230,10 @@
             onerror="this.onerror=null;this.src='https://placehold.co/64x64/e2e8f0/4a5568?text=AFC';"
           />
           <h1 class="text-2xl font-bold tracking-tight">Booking Layanan AC</h1>
-          <p class="text-gray-300 text-sm mt-2">Aqsha Fresh & Cool</p>
+          <p class="text-gray-300 text-sm mt-2"></p>
         </div>
 
         <div class="form-container p-8">
-          <!-- CORS Information -->
-          <div id="corsInfo" class="cors-info hidden">
-            <h4>⚠️ Masalah CORS Terdeteksi</h4>
-            <p>
-              File HTML ini dibuka langsung di browser. Untuk mengatasi masalah
-              CORS:
-            </p>
-            <ul>
-              <li>Upload file ke web hosting (GitHub Pages, Netlify, dll)</li>
-              <li>
-                Atau gunakan local server (Live Server extension di VS Code)
-              </li>
-              <li>
-                Atau akses melalui: <code>http://localhost</code> bukan
-                <code>file://</code>
-              </li>
-            </ul>
-            <p>
-              <strong>Sementara ini, sistem akan menggunakan mode demo.</strong>
-            </p>
-          </div>
-
           <form id="bookingForm" name="submit-to-google-sheet">
             <div
               id="quotaInfo"
@@ -289,14 +243,6 @@
               <div id="quotaStatus" class="mt-2 text-xs font-medium">
                 Mohon tunggu...
               </div>
-              <button
-                type="button"
-                id="retryBtn"
-                class="retry-btn hidden"
-                onclick="retryFetchData()"
-              >
-                Coba Lagi
-              </button>
             </div>
 
             <div class="form-group relative mb-4">
@@ -441,6 +387,7 @@
                 </option>
               </select>
 
+              <!-- Custom cluster input for external locations -->
               <div id="customClusterInput" class="custom-cluster-input">
                 <input
                   type="text"
@@ -484,7 +431,7 @@
                 class="form-input w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                 required
                 autocomplete="street-address"
-                placeholder="Contoh: D4/13 atau alamat lengkap jika eksternal"
+                placeholder="Contoh :  D4/13 atau alamat lengkap jika eksternal"
               ></textarea>
             </div>
 
@@ -492,9 +439,8 @@
               <label
                 for="tanggalKunjungan"
                 class="block text-sm font-medium mb-1"
+                >Tanggal Kunjungan <span class="text-red-500">*</span></label
               >
-                Tanggal Kunjungan <span class="text-red-500">*</span>
-              </label>
               <input
                 type="date"
                 id="tanggalKunjungan"
@@ -509,9 +455,9 @@
 
             <!-- Service Selection -->
             <div id="serviceSelection" class="mb-6">
-              <label class="block text-sm font-medium mb-4">
-                Pilih Layanan <span class="text-red-500">*</span>
-              </label>
+              <label class="block text-sm font-medium mb-4"
+                >Pilih Layanan <span class="text-red-500">*</span></label
+              >
               <p class="text-xs text-gray-600 mb-4">
                 💡 Total maksimal 10 unit AC per hari (gabungan cuci +
                 perbaikan)
@@ -582,9 +528,10 @@
 
             <!-- Time Selection -->
             <div id="timeSelection" class="mb-6">
-              <label class="block text-sm font-medium mb-4">
-                Pilih Waktu Kunjungan <span class="text-red-500">*</span>
-              </label>
+              <label class="block text-sm font-medium mb-4"
+                >Pilih Waktu Kunjungan
+                <span class="text-red-500">*</span></label
+              >
 
               <div
                 class="time-option disabled"
@@ -635,7 +582,7 @@
                 name="catatan"
                 rows="3"
                 class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                placeholder="Contoh: Saya bersedia reschedule kunjungan teknisi jika ada jadwal kosong lebih cepat"
+                placeholder="Contoh : Saya bersedia reschedule kunjungan teknisi jika ada jadwal kosong lebih cepat"
               ></textarea>
             </div>
 
@@ -677,7 +624,7 @@
       </div>
     </div>
 
-    <!-- Modals -->
+    <!-- Modals remain the same -->
     <div
       id="loading-modal"
       class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
@@ -721,6 +668,7 @@
           Jadwal Anda telah kami catat dan pesan konfirmasi telah dikirim ke
           WhatsApp Anda secara otomatis.
         </p>
+
         <button
           class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition"
           onclick="closeFeedbackMessage()"
@@ -758,6 +706,7 @@
         </div>
         <h3 class="text-xl font-bold text-gray-800 mb-2">Terjadi Kesalahan</h3>
         <p id="error-message" class="text-gray-500 mb-4">Silakan coba lagi.</p>
+
         <button
           class="w-full bg-red-600 text-white p-3 rounded-lg font-semibold hover:bg-red-700 transition"
           onclick="closeErrorModal()"
@@ -770,7 +719,7 @@
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         // ===================================================
-        // CONFIGURATION & VARIABLES - WITH CORS HANDLING
+        // CONFIGURATION & VARIABLES
         // ===================================================
         const scriptURL =
           "https://script.google.com/macros/s/AKfycbx5a-YiiBYn-qDGL5Fskyw7Kphia8THRGEVbDq7u1g4bvF43h5ed8cWAram0uz8zmlk/exec";
@@ -791,8 +740,6 @@
         const quotaInfo = document.getElementById("quotaInfo");
         const refreshIndicator = document.getElementById("refreshIndicator");
         const totalUnitsDisplay = document.getElementById("totalUnitsDisplay");
-        const retryBtn = document.getElementById("retryBtn");
-        const corsInfo = document.getElementById("corsInfo");
 
         // Cluster elements
         const clusterSelect = document.getElementById("cluster");
@@ -825,65 +772,16 @@
         const bookingWarning = document.getElementById("bookingWarning");
 
         // State management
-        let serviceQuantities = { cuci: 0, perbaikan: 0 };
+        let serviceQuantities = {
+          cuci: 0,
+          perbaikan: 0,
+        };
         let selectedTime = "";
-        let dailyQuota = {};
+        let dailyQuota = {}; // Will store daily quota information from server
         let autoRefreshInterval;
-        let retryCount = 0;
-        const maxRetries = 3;
-        let isDemoMode = false;
 
         // ===================================================
-        // CORS DETECTION AND HANDLING
-        // ===================================================
-
-        function detectCORSIssue() {
-          return (
-            window.location.protocol === "file:" ||
-            window.location.hostname === ""
-          );
-        }
-
-        function showCORSInfo() {
-          corsInfo.classList.remove("hidden");
-          isDemoMode = true;
-          console.log("CORS issue detected - switching to demo mode");
-        }
-
-        function generateDemoData() {
-          const today = new Date();
-          const demoQuota = {};
-
-          // Generate demo data for next 30 days
-          for (let i = 0; i < 30; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() + i);
-            const dateString = date.toISOString().split("T")[0];
-            const isFriday = date.getDay() === 5;
-            const maxCapacity = isFriday ? 6 : 10;
-            const randomBooked = Math.floor(Math.random() * (maxCapacity - 2));
-
-            demoQuota[dateString] = {
-              totalBooked: randomBooked,
-              maxCapacity: maxCapacity,
-              bookings: [],
-              isFriday: isFriday,
-              limitReason: isFriday ? "Terbatas karena waktu ibadah Jumat" : "",
-            };
-          }
-
-          return demoQuota;
-        }
-
-        function generateDemoBookingId() {
-          const timestamp = Date.now();
-          const random = Math.floor(Math.random() * 1000);
-          const baseNumber = 25001 + (timestamp % 10000) + random;
-          return `AFC-${baseNumber}`;
-        }
-
-        // ===================================================
-        // ENHANCED ERROR HANDLING & RETRY MECHANISM
+        // AUTO REFRESH FUNCTIONALITY
         // ===================================================
 
         function showRefreshIndicator() {
@@ -893,39 +791,11 @@
           }, 2000);
         }
 
-        function showErrorState(message) {
-          quotaInfo.className =
-            "info-box error-state rounded-lg p-4 mb-6 text-center text-sm";
-          quotaMessage.innerHTML = "❌ Gagal memuat data dari server";
-          quotaStatus.innerHTML = message;
-          retryBtn.classList.remove("hidden");
-          bookingIdInput.value = "Error!";
-        }
-
-        function hideErrorState() {
-          quotaInfo.className =
-            "info-box rounded-lg p-4 mb-6 text-center text-sm";
-          retryBtn.classList.add("hidden");
-          retryCount = 0;
-        }
-
-        window.retryFetchData = function () {
-          retryCount++;
-          if (retryCount <= maxRetries) {
-            quotaStatus.innerHTML = `Mencoba lagi... (${retryCount}/${maxRetries})`;
-            fetchInitialData(true);
-          } else {
-            quotaStatus.innerHTML =
-              "Gagal setelah beberapa percobaan. Periksa koneksi internet Anda.";
-          }
-        };
-
         function startAutoRefresh() {
-          if (isDemoMode) return; // Don't auto-refresh in demo mode
-
+          // Refresh every 30 seconds
           autoRefreshInterval = setInterval(async () => {
             showRefreshIndicator();
-            await fetchInitialData(false);
+            await fetchInitialData(false); // Silent refresh
             updateDateDisplay();
           }, 30000);
         }
@@ -933,138 +803,6 @@
         function stopAutoRefresh() {
           if (autoRefreshInterval) {
             clearInterval(autoRefreshInterval);
-          }
-        }
-
-        // ===================================================
-        // ENHANCED DATA FETCHING WITH CORS HANDLING
-        // ===================================================
-
-        async function fetchInitialData(showLoading = true) {
-          if (showLoading) {
-            quotaStatus.innerHTML = "Memuat data...";
-            quotaMessage.innerHTML = "Menghubungi server...";
-            bookingIdInput.value = "Memuat...";
-            hideErrorState();
-          }
-
-          // Check for CORS issues first
-          if (detectCORSIssue()) {
-            showCORSInfo();
-            // Use demo data
-            dailyQuota = generateDemoData();
-            bookingIdInput.value = generateDemoBookingId();
-
-            quotaStatus.innerHTML = "Mode Demo - Data simulasi";
-            quotaMessage.innerHTML =
-              "Menggunakan data demo karena masalah CORS";
-            quotaInfo.className =
-              "info-box quota-warning rounded-lg p-4 mb-6 text-center text-sm";
-
-            if (tanggalKunjunganInput.value) {
-              updateDateDisplay();
-            }
-            return;
-          }
-
-          try {
-            console.log("Fetching data from:", scriptURL);
-
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-            const response = await fetch(
-              `${scriptURL}?action=getInitialData&t=${Date.now()}`,
-              {
-                method: "GET",
-                signal: controller.signal,
-                headers: {
-                  Accept: "application/json",
-                  "Cache-Control": "no-cache",
-                },
-              }
-            );
-
-            clearTimeout(timeoutId);
-
-            console.log("Response status:", response.status);
-
-            if (!response.ok) {
-              throw new Error(
-                `HTTP error! status: ${response.status} - ${response.statusText}`
-              );
-            }
-
-            const contentType = response.headers.get("content-type");
-            if (!contentType || !contentType.includes("application/json")) {
-              const textResponse = await response.text();
-              console.error("Non-JSON response:", textResponse);
-              throw new Error("Server returned non-JSON response");
-            }
-
-            const data = await response.json();
-            console.log("Received data:", data);
-
-            if (data.status === "success") {
-              dailyQuota = data.dailyQuota || {};
-
-              if (showLoading) {
-                bookingIdInput.value =
-                  data.nextBookingId || generateDemoBookingId();
-              }
-
-              console.log("Daily quota updated:", dailyQuota);
-              hideErrorState();
-
-              if (tanggalKunjunganInput.value) {
-                updateDateDisplay();
-              } else {
-                quotaStatus.innerHTML =
-                  "Pilih tanggal untuk melihat slot waktu";
-                quotaMessage.innerHTML =
-                  "Pilih tanggal kunjungan untuk melihat ketersediaan slot";
-                quotaInfo.className =
-                  "info-box rounded-lg p-4 mb-6 text-center text-sm";
-              }
-            } else {
-              throw new Error(data.message || "Server returned error status");
-            }
-          } catch (error) {
-            console.error("Error fetching data:", error);
-
-            let errorMessage = "Gagal memuat data. ";
-
-            if (error.name === "AbortError") {
-              errorMessage += "Koneksi timeout.";
-            } else if (error.message.includes("HTTP error")) {
-              errorMessage += "Server error.";
-            } else if (error.message.includes("Failed to fetch")) {
-              errorMessage += "Periksa koneksi internet.";
-              // Switch to demo mode on fetch failure
-              showCORSInfo();
-              dailyQuota = generateDemoData();
-              bookingIdInput.value = generateDemoBookingId();
-              quotaStatus.innerHTML = "Mode Demo - Koneksi gagal";
-              quotaMessage.innerHTML =
-                "Menggunakan data demo karena koneksi gagal";
-              quotaInfo.className =
-                "info-box quota-warning rounded-lg p-4 mb-6 text-center text-sm";
-              return;
-            } else {
-              errorMessage += error.message;
-            }
-
-            if (showLoading) {
-              showErrorState(errorMessage);
-              bookingIdInput.value = generateDemoBookingId();
-            }
-
-            if (!showLoading && retryCount < maxRetries) {
-              setTimeout(() => {
-                retryCount++;
-                fetchInitialData(false);
-              }, 5000);
-            }
           }
         }
 
@@ -1085,7 +823,7 @@
         });
 
         // ===================================================
-        // QUANTITY MANAGEMENT FUNCTIONS
+        // QUANTITY MANAGEMENT FUNCTIONS (FIXED LOGIC)
         // ===================================================
 
         function updateQuantity(serviceType, change) {
@@ -1093,27 +831,35 @@
           const otherServiceType =
             serviceType === "cuci" ? "perbaikan" : "cuci";
           const otherQty = serviceQuantities[otherServiceType];
+          const currentTotal = currentQty + otherQty;
 
           let newQty = currentQty + change;
 
-          if (newQty < 0) newQty = 0;
+          // Ensure quantity doesn't go below 0
+          if (newQty < 0) {
+            newQty = 0;
+          }
 
+          // Ensure total doesn't exceed 10
           const newTotal = newQty + otherQty;
           if (newTotal > 10) {
-            newQty = 10 - otherQty;
+            newQty = 10 - otherQty; // Adjust to fit within limit
           }
 
           serviceQuantities[serviceType] = newQty;
 
+          // Update display
           document.getElementById(`${serviceType}Quantity`).textContent =
             newQty;
           document.getElementById(
             `${serviceType}Count`
           ).textContent = `${newQty} unit`;
 
+          // Update section styling
           const section = document.getElementById(`${serviceType}Section`);
           section.classList.toggle("has-selection", newQty > 0);
 
+          // Update button states
           updateQuantityButtons();
           updateTotalUnits();
           validateBooking();
@@ -1123,11 +869,14 @@
           const totalUnits =
             serviceQuantities.cuci + serviceQuantities.perbaikan;
 
+          // Update minus buttons
           cuciMinus.classList.toggle("disabled", serviceQuantities.cuci === 0);
           perbaikanMinus.classList.toggle(
             "disabled",
             serviceQuantities.perbaikan === 0
           );
+
+          // Update plus buttons - disable if total would exceed 10
           cuciPlus.classList.toggle("disabled", totalUnits >= 10);
           perbaikanPlus.classList.toggle("disabled", totalUnits >= 10);
         }
@@ -1138,6 +887,7 @@
           jumlahUnitInput.value = totalUnits;
           totalUnitsDisplay.textContent = `${totalUnits} / 10`;
 
+          // Update color based on total
           if (totalUnits === 0) {
             totalUnitsDisplay.className = "font-bold text-lg text-gray-400";
           } else if (totalUnits >= 8) {
@@ -1148,6 +898,7 @@
             totalUnitsDisplay.className = "font-bold text-lg text-blue-600";
           }
 
+          // Update hidden input with service data
           const serviceData = {
             cuci: serviceQuantities.cuci,
             perbaikan: serviceQuantities.perbaikan,
@@ -1160,15 +911,20 @@
         // ===================================================
 
         function selectTimeSlot(timeSlot) {
-          if (timeSlot.classList.contains("disabled")) return;
+          if (timeSlot.classList.contains("disabled")) {
+            return;
+          }
 
+          // Remove selection from all slots
           morningSlot.classList.remove("selected");
           afternoonSlot.classList.remove("selected");
 
+          // Add selection to clicked slot
           timeSlot.classList.add("selected");
           selectedTime = timeSlot.dataset.time;
           selectedTimeInput.value = selectedTime;
 
+          // Update waktu kunjungan for spreadsheet
           const timeText =
             selectedTime === "morning"
               ? "Pagi (08:00-11:30)"
@@ -1194,13 +950,14 @@
         }
 
         // ===================================================
-        // ENHANCED VALIDATION FUNCTIONS
+        // VALIDATION FUNCTIONS (ENHANCED)
         // ===================================================
 
         function validateBooking() {
           const visitDate = tanggalKunjunganInput.value;
           const totalUnits = parseInt(jumlahUnitInput.value) || 0;
 
+          // Reset button state
           submitButton.disabled = true;
           submitButton.classList.add("opacity-50", "cursor-not-allowed");
 
@@ -1211,8 +968,10 @@
             return;
           }
 
+          // Enable time slots when date is selected
           enableTimeSlots();
 
+          // Check if date is full
           const quota = dailyQuota[visitDate];
           if (quota && quota.totalBooked >= quota.maxCapacity) {
             submitButton.textContent = "Jadwal Penuh - Pilih Tanggal Lain";
@@ -1229,11 +988,10 @@
             return;
           }
 
+          // Check if booking would exceed daily capacity
           const currentBooked = quota ? quota.totalBooked : 0;
-          const maxCapacity = quota ? quota.maxCapacity : 10;
-
-          if (currentBooked + totalUnits > maxCapacity) {
-            const available = maxCapacity - currentBooked;
+          if (currentBooked + totalUnits > 10) {
+            const available = 10 - currentBooked;
             submitButton.textContent = `Hanya tersisa ${available} slot - Kurangi jumlah unit`;
             showBookingWarning(
               `Tanggal ini hanya tersisa ${available} slot. Silakan kurangi jumlah unit atau pilih tanggal lain.`
@@ -1241,11 +999,10 @@
             return;
           }
 
+          // All validations passed
           submitButton.disabled = false;
           submitButton.classList.remove("opacity-50", "cursor-not-allowed");
-          submitButton.textContent = isDemoMode
-            ? "Demo Mode - Tidak Akan Terkirim"
-            : "Booking Sekarang";
+          submitButton.textContent = "Booking Sekarang";
           bookingWarning.classList.add("hidden");
         }
 
@@ -1255,8 +1012,59 @@
         }
 
         // ===================================================
-        // ENHANCED DATE DISPLAY UPDATE
+        // DATA FETCHING FUNCTIONS (ENHANCED)
         // ===================================================
+
+        async function fetchInitialData(showLoading = true) {
+          if (showLoading) {
+            quotaStatus.innerHTML = "Memuat data...";
+            bookingIdInput.value = "Memuat...";
+          }
+
+          try {
+            const response = await fetch(
+              `${scriptURL}?action=getInitialData&t=${Date.now()}`
+            );
+            if (!response.ok)
+              throw new Error(`HTTP error! status: ${response.status}`);
+
+            const data = await response.json();
+            console.log("Received data:", data); // Debug log
+
+            if (data.status === "success") {
+              dailyQuota = data.dailyQuota || {}; // Get daily quota from server
+              if (showLoading) {
+                bookingIdInput.value = data.nextBookingId;
+              }
+
+              console.log("Daily quota updated:", dailyQuota); // Debug log
+
+              // Update display immediately if date is already selected
+              if (tanggalKunjunganInput.value) {
+                updateDateDisplay();
+              } else {
+                quotaStatus.innerHTML =
+                  "Pilih tanggal untuk melihat slot waktu";
+                quotaMessage.innerHTML =
+                  "Pilih tanggal kunjungan untuk melihat ketersediaan slot";
+                quotaInfo.className =
+                  "info-box rounded-lg p-4 mb-6 text-center text-sm";
+              }
+            } else {
+              throw new Error(data.message || "Gagal memuat data.");
+            }
+          } catch (error) {
+            console.error("Gagal mengambil data awal:", error);
+            if (showLoading) {
+              quotaStatus.innerHTML =
+                '<span class="text-red-500">Gagal memuat data. Mencoba lagi...</span>';
+              bookingIdInput.value = "Error!";
+
+              // Retry after 5 seconds
+              setTimeout(() => fetchInitialData(true), 5000);
+            }
+          }
+        }
 
         function updateDateDisplay() {
           const visitDate = tanggalKunjunganInput.value;
@@ -1280,8 +1088,9 @@
               day: "numeric",
             });
 
+            // Check quota for this date
             const quota = dailyQuota[visitDate];
-            console.log(`Quota for ${visitDate}:`, quota);
+            console.log(`Quota for ${visitDate}:`, quota); // Debug log
 
             if (quota) {
               const available = quota.maxCapacity - quota.totalBooked;
@@ -1305,19 +1114,9 @@
                   "info-box quota-available rounded-lg p-4 mb-6 text-center text-sm";
                 enableTimeSlots();
               }
-
-              if (quota.isFriday) {
-                quotaStatus.innerHTML += " (Hari Jumat - Max 6 unit)";
-              }
-
-              if (isDemoMode) {
-                quotaStatus.innerHTML += " [DEMO]";
-              }
             } else {
               quotaMessage.innerHTML = `Slot waktu tersedia pada <strong>${formattedDate}</strong>`;
-              quotaStatus.innerHTML = isDemoMode
-                ? "✅ Tersedia 10 slot [DEMO]"
-                : "✅ Tersedia 10 slot";
+              quotaStatus.innerHTML = "✅ Tersedia 10 slot";
               quotaInfo.className =
                 "info-box quota-available rounded-lg p-4 mb-6 text-center text-sm";
               enableTimeSlots();
@@ -1332,9 +1131,10 @@
         }
 
         // ===================================================
-        // EVENT LISTENERS
+        // EVENT LISTENERS (ENHANCED)
         // ===================================================
 
+        // Quantity button listeners with improved logic
         cuciPlus.addEventListener("click", (e) => {
           e.preventDefault();
           if (!cuciPlus.classList.contains("disabled")) {
@@ -1363,6 +1163,7 @@
           }
         });
 
+        // Time slot listeners
         morningSlot.addEventListener("click", () =>
           selectTimeSlot(morningSlot)
         );
@@ -1370,12 +1171,15 @@
           selectTimeSlot(afternoonSlot)
         );
 
+        // Date change listeners with immediate update
         tanggalKunjunganInput.addEventListener("input", function (e) {
           const selectedDateString = e.target.value;
 
+          // Check for Sunday in 2025
           if (selectedDateString.startsWith("2025")) {
             const selectedDate = new Date(selectedDateString + "T00:00:00");
             if (selectedDate.getDay() === 0) {
+              // Sunday
               alert(
                 "Mohon maaf, kami tidak melayani booking pada hari Minggu di tahun 2025. Silakan pilih hari lain."
               );
@@ -1385,6 +1189,7 @@
             }
           }
 
+          // Clear time selection when date changes
           selectedTime = "";
           selectedTimeInput.value = "";
           waktuKunjunganInput.value = "";
@@ -1397,22 +1202,16 @@
         tanggalKunjunganInput.addEventListener("change", updateDateDisplay);
 
         // ===================================================
-        // ENHANCED FORM SUBMISSION WITH DEMO MODE
+        // FORM SUBMISSION (ENHANCED)
         // ===================================================
 
         bookingForm.addEventListener("submit", async (e) => {
           e.preventDefault();
 
-          if (isDemoMode) {
-            showError(
-              "Mode demo aktif. Untuk booking sesungguhnya, upload file ke web hosting atau gunakan local server."
-            );
-            return;
-          }
-
           const visitDate = tanggalKunjunganInput.value;
           const totalUnits = parseInt(jumlahUnitInput.value);
 
+          // Enhanced validation before submission
           if (!visitDate) {
             showError("Mohon pilih tanggal kunjungan terlebih dahulu.");
             return;
@@ -1433,12 +1232,11 @@
             return;
           }
 
+          // Check quota before submission
           const quota = dailyQuota[visitDate];
           const currentBooked = quota ? quota.totalBooked : 0;
-          const maxCapacity = quota ? quota.maxCapacity : 10;
-
-          if (currentBooked + totalUnits > maxCapacity) {
-            const available = maxCapacity - currentBooked;
+          if (currentBooked + totalUnits > 10) {
+            const available = 10 - currentBooked;
             showError(
               `Maaf, tanggal ini hanya tersisa ${available} slot. Silakan kurangi jumlah unit atau pilih tanggal lain.`
             );
@@ -1451,6 +1249,7 @@
           try {
             const formData = new FormData(bookingForm);
 
+            // Handle cluster data
             let clusterValue = clusterSelect.value;
             if (
               clusterValue === "Eksternal (Luar Latinos)" &&
@@ -1464,10 +1263,10 @@
               method: "POST",
               body: formData,
             });
-
             const result = await response.json();
 
             if (result.status === "success") {
+              // Create service details for WhatsApp message
               let serviceDetails = [];
               if (serviceQuantities.cuci > 0) {
                 serviceDetails.push(
@@ -1497,6 +1296,7 @@
                 clusterValue
               );
 
+              // Refresh data after successful booking
               await fetchInitialData(false);
               showFeedback("success");
             } else {
@@ -1590,10 +1390,12 @@ _Layanan AC Profesional De Latinos & Sekitarnya_`;
         // ===================================================
 
         function showFeedback(type) {
+          // Hide all modals
           loadingModal.classList.add("hidden");
           successModal.classList.add("hidden");
           errorModal.classList.add("hidden");
 
+          // Show specific modal
           if (type === "loading") loadingModal.classList.remove("hidden");
           else if (type === "success") successModal.classList.remove("hidden");
         }
@@ -1622,8 +1424,10 @@ _Layanan AC Profesional De Latinos & Sekitarnya_`;
 
           tanggalKunjunganInput.min = todayString;
 
+          // Auto-set today's date and immediately update display
           if (!tanggalKunjunganInput.value) {
             tanggalKunjunganInput.value = todayString;
+            // Trigger immediate update
             setTimeout(() => {
               updateDateDisplay();
             }, 100);
@@ -1638,39 +1442,44 @@ _Layanan AC Profesional De Latinos & Sekitarnya_`;
           if (document.hidden) {
             stopAutoRefresh();
           } else {
-            if (!isDemoMode) {
-              fetchInitialData(false);
-              startAutoRefresh();
-            }
+            // Page became visible again, refresh data
+            fetchInitialData(false);
+            startAutoRefresh();
           }
         });
 
         // ===================================================
-        // ENHANCED INITIALIZATION WITH CORS DETECTION
+        // INITIALIZATION (ENHANCED)
         // ===================================================
 
         async function initializePage() {
           console.log("Initializing booking system...");
 
+          // Set minimum date and auto-select today
           setMinVisitDate();
+
+          // Initialize quantities and buttons
           updateQuantityButtons();
           updateTotalUnits();
 
+          // Fetch initial data
           await fetchInitialData(true);
 
+          // Update display if date is already set
           if (tanggalKunjunganInput.value) {
             updateDateDisplay();
           }
 
-          if (!isDemoMode) {
-            startAutoRefresh();
-          }
+          // Start auto refresh
+          startAutoRefresh();
 
           console.log("Booking system initialized successfully");
         }
 
+        // Initialize the page
         initializePage();
 
+        // Handle page unload
         window.addEventListener("beforeunload", function () {
           stopAutoRefresh();
         });
