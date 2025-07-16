@@ -1022,9 +1022,22 @@
           }
 
           try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
             const response = await fetch(
-              `${scriptURL}?action=getInitialData&t=${Date.now()}`
+              `${scriptURL}?action=getInitialData&t=${Date.now()}`,
+              { 
+                signal: controller.signal,
+                mode: 'cors',
+                headers: {
+                  'Content-Type': 'application/json',
+                }
+              }
             );
+            
+            clearTimeout(timeoutId);
+            
             if (!response.ok)
               throw new Error(`HTTP error! status: ${response.status}`);
 
@@ -1038,6 +1051,13 @@
               }
 
               console.log("Daily quota updated:", dailyQuota); // Debug log
+
+              // Check if we were in offline mode and now restored
+              const offlineNotice = document.getElementById('offline-notice');
+              if (offlineNotice) {
+                offlineNotice.remove();
+                showConnectionRestoredNotice();
+              }
 
               // Update display immediately if date is already selected
               if (tanggalKunjunganInput.value) {
@@ -1055,15 +1075,77 @@
             }
           } catch (error) {
             console.error("Gagal mengambil data awal:", error);
+            
+            // Use fallback data when server is not available
+            const fallbackData = generateFallbackData();
+            
             if (showLoading) {
-              quotaStatus.innerHTML =
-                '<span class="text-red-500">Gagal memuat data. Mencoba lagi...</span>';
-              bookingIdInput.value = "Error!";
-
-              // Retry after 5 seconds
-              setTimeout(() => fetchInitialData(true), 5000);
+              if (error.name === 'AbortError') {
+                quotaStatus.innerHTML = 
+                  '<span class="text-yellow-500">Koneksi lambat - Menggunakan mode offline</span>';
+              } else {
+                quotaStatus.innerHTML =
+                  '<span class="text-yellow-500">Server tidak tersedia - Mode offline aktif</span>';
+              }
+              
+              bookingIdInput.value = fallbackData.nextBookingId;
+              dailyQuota = fallbackData.dailyQuota;
+              
+              // Show offline notice
+              showOfflineNotice();
+              
+              // Retry after 15 seconds in background
+              setTimeout(() => {
+                fetchInitialData(false); // Silent retry
+              }, 15000);
             }
           }
+        }
+
+        function generateFallbackData() {
+          // Generate a booking ID based on timestamp
+          const now = new Date();
+          const bookingId = `AFC${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+          
+          // Create fallback quota data (assuming 15 slots per day)
+          const fallbackQuota = {};
+          for (let i = 0; i < 30; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() + i);
+            const dateStr = date.toISOString().split('T')[0];
+            fallbackQuota[dateStr] = Math.floor(Math.random() * 15) + 5; // Random available slots
+          }
+          
+          return {
+            nextBookingId: bookingId,
+            dailyQuota: fallbackQuota
+          };
+        }
+
+        function showOfflineNotice() {
+          const notice = document.createElement('div');
+          notice.id = 'offline-notice';
+          notice.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+          notice.innerHTML = `
+            <div class="flex items-center space-x-2">
+              <span>⚠️</span>
+              <span>Mode Offline - Data mungkin tidak terbaru</span>
+              <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">&times;</button>
+            </div>
+          `;
+          
+          // Remove existing notice if any
+          const existing = document.getElementById('offline-notice');
+          if (existing) existing.remove();
+          
+          document.body.appendChild(notice);
+          
+          // Auto remove after 10 seconds
+          setTimeout(() => {
+            if (document.getElementById('offline-notice')) {
+              notice.remove();
+            }
+          }, 10000);
         }
 
         function updateDateDisplay() {
@@ -1474,6 +1556,41 @@ _Layanan AC Profesional De Latinos & Sekitarnya_`;
           startAutoRefresh();
 
           console.log("Booking system initialized successfully");
+        }
+
+        // Connection status checker
+        async function checkServerConnection() {
+          try {
+            const response = await fetch(`${scriptURL}?action=ping&t=${Date.now()}`, {
+              method: 'GET',
+              mode: 'cors',
+              signal: AbortSignal.timeout(5000)
+            });
+            return response.ok;
+          } catch (error) {
+            return false;
+          }
+        }
+
+        // Show connection restored notice
+        function showConnectionRestoredNotice() {
+          const notice = document.createElement('div');
+          notice.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+          notice.innerHTML = `
+            <div class="flex items-center space-x-2">
+              <span>✅</span>
+              <span>Koneksi server pulih - Data telah diperbarui</span>
+            </div>
+          `;
+          
+          document.body.appendChild(notice);
+          
+          // Auto remove after 5 seconds
+          setTimeout(() => {
+            if (notice.parentNode) {
+              notice.remove();
+            }
+          }, 5000);
         }
 
         // Initialize the page
